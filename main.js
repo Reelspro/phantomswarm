@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const path = require("path");
 const fs = require("fs");
 
@@ -99,11 +100,69 @@ app.whenReady().then(() => {
   createWindow();
   registerIpcHandlers();
   loadPhantomConfig();
+  setupAutoUpdater();
 });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
+
+// ── Auto Updater Setup ────────────────────────────────────────────────────────
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    sendUpdateStatus({ status: 'checking', message: 'Checking for updates...' });
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    sendUpdateStatus({
+      status: 'available',
+      version: info.version,
+      releaseNotes: info.releaseNotes,
+      message: `🎉 New update v${info.version} available! Downloading in background...`
+    });
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    sendUpdateStatus({ status: 'not-available', message: 'App is up to date (v1.0.0).' });
+  });
+
+  autoUpdater.on('error', (err) => {
+    sendUpdateStatus({ status: 'error', message: err ? (err.message || String(err)) : 'Update check error.' });
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    sendUpdateStatus({
+      status: 'downloading',
+      percent: Math.round(progressObj.percent || 0),
+      bytesPerSecond: progressObj.bytesPerSecond,
+      message: `Downloading update: ${Math.round(progressObj.percent || 0)}%`
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    sendUpdateStatus({
+      status: 'downloaded',
+      version: info.version,
+      message: `✨ Update v${info.version} ready! Click 'Restart & Install' to update.`
+    });
+  });
+
+  // Check for updates 5 seconds after launch
+  setTimeout(() => {
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify().catch(e => console.error("AutoUpdater check error:", e));
+    }
+  }, 5000);
+}
+
+function sendUpdateStatus(data) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', data);
+  }
+}
 
 // ── Runtime Config Loading with JWT security ──────────────────────────────────
 function loadPhantomConfig() {
@@ -119,6 +178,30 @@ function loadPhantomConfig() {
 
 // ── IPC Handlers ──────────────────────────────────────────────────────────────
 function registerIpcHandlers() {
+
+  ipcMain.handle("check-for-updates", async () => {
+    try {
+      if (!app.isPackaged) {
+        sendUpdateStatus({ status: 'not-available', message: 'Updates are only checked in packaged build.' });
+        return { status: 'dev' };
+      }
+      return await autoUpdater.checkForUpdates();
+    } catch (err) {
+      console.error("AutoUpdater manual check error:", err);
+      sendUpdateStatus({ status: 'error', message: err.message });
+      return { error: err.message };
+    }
+  });
+
+  ipcMain.handle("restart-and-install", async () => {
+    try {
+      autoUpdater.quitAndInstall(false, true);
+      return { success: true };
+    } catch (err) {
+      console.error("Restart & install error:", err);
+      return { success: false, message: err.message };
+    }
+  });
 
   ipcMain.handle("get-profiles", async () => {
     return await profileManager.getProfiles();

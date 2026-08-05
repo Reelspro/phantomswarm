@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "dotenv": "^16.3.1",
+    "electron-updater": "^6.8.9",
     "lucide-react": "^0.284.0",
     "puppeteer": "^21.3.8",
     "react": "^18.2.0",
@@ -67,7 +68,9 @@
       {
         "from": "puppeteer-cache/chrome/win64-121.0.6167.85/chrome-win64",
         "to": "chrome-win64",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
@@ -109,6 +112,10 @@
     "portable": {
       "artifactName": "PhantomSwarm-Portable-${version}.exe"
     },
-    "publish": null
+    "publish": {
+      "provider": "github",
+      "owner": "Reelspro",
+      "repo": "phantomswarm"
+    }
   }
 }

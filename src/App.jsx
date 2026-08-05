@@ -55,6 +55,9 @@ if (typeof window !== 'undefined' && !window.electron) {
     launchAll: async () => ({ success: true }),
     useTiktokSound: async () => ({ success: true }),
     askAi: async () => "AI Assistant ready.",
+    checkForUpdates: async () => ({}),
+    restartAndInstall: async () => ({}),
+    onUpdateStatus: () => () => {},
     invoke: async () => ({})
   };
 }
@@ -98,13 +101,23 @@ const App = () => {
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   const [filterPlatform, setFilterPlatform] = useState('all');
+  const [updateStatus, setUpdateStatus] = useState(null);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(() => {
       if (activeTab === 'profiles') fetchProfiles();
     }, 3000);
-    return () => clearInterval(interval);
+
+    const unsubscribeUpdate = window.electron.onUpdateStatus ? window.electron.onUpdateStatus((data) => {
+      console.log('Update status:', data);
+      setUpdateStatus(data);
+    }) : () => {};
+
+    return () => {
+      clearInterval(interval);
+      if (typeof unsubscribeUpdate === 'function') unsubscribeUpdate();
+    };
   }, [activeTab]);
 
   const fetchData = async () => {
@@ -485,6 +498,34 @@ const App = () => {
       </div>
 
       <div className="main-content">
+        {updateStatus && (updateStatus.status === 'downloaded' || updateStatus.status === 'downloading' || updateStatus.status === 'available') && (
+          <div style={{
+            background: updateStatus.status === 'downloaded' ? 'linear-gradient(90deg, #ff0050, #7928ca)' : 'rgba(255, 0, 80, 0.15)',
+            border: '1px solid var(--primary)',
+            borderRadius: '12px',
+            padding: '12px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'space-between',
+            gap: '15px',
+            boxShadow: '0 4px 15px rgba(255, 0, 80, 0.2)'
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', fontWeight: 'bold', color: 'white'}}>
+              <Zap size={18} color="var(--primary-bright)" />
+              <span>{updateStatus.message}</span>
+            </div>
+            {updateStatus.status === 'downloaded' && (
+              <button 
+                className="btn btn-primary" 
+                style={{background: 'white', color: 'black', fontWeight: 'bold', border: 'none', padding: '6px 14px', fontSize: '0.8rem'}}
+                onClick={() => window.electron.restartAndInstall()}
+              >
+                🔄 Restart & Install Now
+              </button>
+            )}
+          </div>
+        )}
         {activeTab === 'profiles' && (
           <>
             <div className="header">
@@ -769,6 +810,45 @@ const App = () => {
               <div style={{display: 'flex', alignItems: 'center', gap: '15px', marginTop: '24px'}}>
                 <button className="btn btn-primary" style={{flex: 1}} onClick={handleSaveSettings}><Save size={18} /> Save Settings</button>
                 {saveStatus && <span className="save-toast" style={{color: 'var(--primary-bright)', fontWeight: 'bold'}}>{saveStatus}</span>}
+              </div>
+
+              <div style={{marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)'}}>
+                <h3 style={{fontSize: '1.1rem', marginBottom: '8px'}}>🔄 Software Updates</h3>
+                <p style={{fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '16px'}}>
+                  Current Installed Version: <b style={{color: 'var(--primary-bright)'}}>v1.0.0</b>
+                </p>
+                <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => {
+                      setUpdateStatus({ status: 'checking', message: 'Checking for updates...' });
+                      window.electron.checkForUpdates();
+                    }}
+                  >
+                    <RefreshCw size={16} /> Check for Updates
+                  </button>
+                  {updateStatus?.status === 'downloaded' && (
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => window.electron.restartAndInstall()}
+                    >
+                      🚀 Install & Restart Now
+                    </button>
+                  )}
+                </div>
+                {updateStatus && (
+                  <div style={{
+                    marginTop: '14px', 
+                    padding: '12px 16px', 
+                    background: 'rgba(255,255,255,0.03)', 
+                    border: '1px solid var(--border)', 
+                    borderRadius: '8px', 
+                    fontSize: '0.8rem',
+                    color: updateStatus.status === 'error' ? 'var(--danger)' : 'var(--text-main)'
+                  }}>
+                    {updateStatus.message}
+                  </div>
+                )}
               </div>
             </div>
           </div>

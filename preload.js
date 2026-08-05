@@ -23,5 +23,12 @@ contextBridge.exposeInMainWorld("electron", {
   launchAll: (profiles) => ipcRenderer.invoke("launch-all", profiles),
   useTiktokSound: (id) => ipcRenderer.invoke("use-tiktok-sound", id),
   askAi: (data) => ipcRenderer.invoke("ask-ai", data),
+  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+  restartAndInstall: () => ipcRenderer.invoke("restart-and-install"),
+  onUpdateStatus: (callback) => {
+    const subscription = (event, value) => callback(value);
+    ipcRenderer.on("update-status", subscription);
+    return () => ipcRenderer.removeListener("update-status", subscription);
+  },
   invoke: (channel, data) => ipcRenderer.invoke(channel, data)
 });
