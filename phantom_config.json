@@ -1,0 +1,7 @@
+{
+  "api_base_url": "https://api.phantom-panel.com",
+  "features": {
+    "auto_update": true,
+    "headless_default": false
+  }
+}

@@ -1,0 +1,30 @@
+PHANTOM SWARM - END USER LICENSE AGREEMENT
+==========================================
+
+Copyright (c) 2025 Phantom Swarm. All rights reserved.
+
+By installing or using Phantom Swarm ("Software"), you agree to the following terms:
+
+1. LICENSE GRANT
+   You are granted a non-exclusive, non-transferable license to use this Software
+   for personal or commercial automation purposes.
+
+2. RESTRICTIONS
+   You may not:
+   - Reverse engineer, decompile, or disassemble the Software
+   - Distribute or sublicense the Software without permission
+   - Use the Software for illegal or malicious activities
+
+3. DISCLAIMER OF WARRANTIES
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+4. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+5. TERMINATION
+   This license is effective until terminated. Your rights under this license
+   will terminate automatically if you fail to comply with any of its terms.
+
+By installing Phantom Swarm, you acknowledge that you have read and agree to
+these terms and conditions.

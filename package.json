@@ -1,0 +1,114 @@
+{
+  "name": "phantom-swarm",
+  "version": "1.0.0",
+  "description": "Multi-profile social media automation browser",
+  "author": "Phantom Swarm",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "electron": "electron .",
+    "start": "vite build && electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "make-icons": "electron-icon-maker --input=build/icon_source.png --output=build",
+    "build": "vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
+    "build:win": "vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win",
+    "build:dir": "vite build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "lucide-react": "^0.284.0",
+    "puppeteer": "^21.3.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@vitejs/plugin-react": "^4.1.0",
+    "cross-env": "^10.1.0",
+    "electron": "^26.6.10",
+    "electron-builder": "^24.6.4",
+    "electron-icon-maker": "^0.0.5",
+    "vite": "^4.4.9"
+  },
+  "build": {
+    "appId": "com.phantomswarm.bot",
+    "productName": "Phantom Swarm",
+    "copyright": "Copyright © 2025 Phantom Swarm",
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/puppeteer/**/*",
+      "**/node_modules/puppeteer-core/**/*"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "core/**/*",
+      "engine/**/*",
+      "main.js",
+      "preload.js",
+      "package.json",
+      "phantom_config.json",
+      "!**/*.spec",
+      "!**/*.md",
+      "!**/.env",
+      "!**/test_write.txt",
+      "!**/error.log",
+      "!**/profiles/**",
+      "!**/db/**"
+    ],
+    "extraResources": [
+      {
+        "from": "core/deviceData.json",
+        "to": "core/deviceData.json"
+      },
+      {
+        "from": "puppeteer-cache/chrome/win64-121.0.6167.85/chrome-win64",
+        "to": "chrome-win64",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icons/win/icon.ico",
+      "sign": null,
+      "certificateFile": null,
+      "certificatePassword": null,
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Phantom Swarm",
+      "installerIcon": "build/icons/win/icon.ico",
+      "uninstallerIcon": "build/icons/win/icon.ico",
+      "installerHeaderIcon": "build/icons/win/icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "license": "build/license.txt",
+      "artifactName": "PhantomSwarm-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "PhantomSwarm-Portable-${version}.exe"
+    },
+    "publish": null
+  }
+}

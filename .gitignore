@@ -1,0 +1,21 @@
+# Dependencies & Builds
+node_modules/
+dist/
+release/
+out/
+puppeteer-cache/
+
+# User Data & Logs
+.env
+*.log
+error.log
+db/
+profiles/
+test_write.txt
+exclude_list.txt
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
