@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("electron", {
   getProxies: () => ipcRenderer.invoke("get-proxies"),
   getDevices: () => ipcRenderer.invoke("get-devices"),
   getSettings: () => ipcRenderer.invoke("get-settings"),
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   updateSetting: (key, value) => ipcRenderer.invoke("update-setting", key, value),
   createProfile: (profile) => ipcRenderer.invoke("create-profile", profile),
   updateProfile: (profile) => ipcRenderer.invoke("update-profile", profile),

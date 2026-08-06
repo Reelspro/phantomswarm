@@ -100,6 +100,7 @@ const App = () => {
 
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [updateStatus, setUpdateStatus] = useState(null);
+  const [currentAppVersion, setCurrentAppVersion] = useState('1.0.2');
 
   useEffect(() => {
     fetchData();
@@ -123,6 +124,12 @@ const App = () => {
     await fetchProxies();
     await fetchDevices();
     await fetchSettings();
+    if (window.electron.getAppVersion) {
+      try {
+        const v = await window.electron.getAppVersion();
+        if (v) setCurrentAppVersion(v);
+      } catch (e) {}
+    }
   };
 
   const fetchProfiles = async () => {
@@ -864,7 +871,7 @@ const App = () => {
               <div style={{marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)'}}>
                 <h3 style={{fontSize: '1.1rem', marginBottom: '8px'}}>🔄 Software Updates</h3>
                 <p style={{fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '16px'}}>
-                  Current Installed Version: <b style={{color: 'var(--primary-bright)'}}>v1.0.0</b>
+                  Current Installed Version: <b style={{color: 'var(--accent-lime)'}}>v{currentAppVersion}</b>
                 </p>
                 <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                   <button 

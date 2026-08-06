@@ -126,7 +126,7 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-not-available', (info) => {
-    sendUpdateStatus({ status: 'not-available', message: 'App is up to date (v1.0.0).' });
+    sendUpdateStatus({ status: 'not-available', message: `App is up to date (v${app.getVersion()}).` });
   });
 
   autoUpdater.on('error', (err) => {
@@ -178,6 +178,10 @@ function loadPhantomConfig() {
 
 // ── IPC Handlers ──────────────────────────────────────────────────────────────
 function registerIpcHandlers() {
+
+  ipcMain.handle("get-app-version", async () => {
+    return app.getVersion();
+  });
 
   ipcMain.handle("check-for-updates", async () => {
     try {
