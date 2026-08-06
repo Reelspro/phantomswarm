@@ -5,11 +5,12 @@ import {
   CheckCircle, Clock, Search, Shield, Smartphone, Save, 
   Trash2, Copy, Zap, Fingerprint, Upload, Bot, Send, Loader2,
   Facebook, Instagram, Twitter, Compass, LayoutGrid, UserPlus, RefreshCw, Music, X, LogIn,
-  AtSign, Hash, BookOpen, Flag,
+  AtSign, Hash, BookOpen, Flag, Eye, EyeOff, Mail,
   BookMarked, Camera, Wind, MessageSquare, ShoppingBag, Share2, Edit, Pencil
 } from 'lucide-react';
 
 const PLATFORM_INFO = {
+  gmail:          { country: 'Global',    flag: '📧', language: 'English', localLang: null },
   facebook:       { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
   instagram:      { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
   twitter:        { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
@@ -101,6 +102,8 @@ const App = () => {
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [updateStatus, setUpdateStatus] = useState(null);
   const [currentAppVersion, setCurrentAppVersion] = useState('1.0.2');
+  const [showPasswords, setShowPasswords] = useState({});
+
 
   useEffect(() => {
     fetchData();
@@ -410,6 +413,7 @@ const App = () => {
 
   const PLATFORM_COLORS = {
     'all':          { bg: '#1a1060', border: '#818cf8', icon: '#a5b4fc' },
+    'gmail':        { bg: '#3a0808', border: '#ea4335', icon: '#ff6b6b' },
     'facebook':     { bg: '#0a3580', border: '#4a9aff', icon: '#60aaff' },
     'instagram':    { bg: '#6b0f3a', border: '#f472b6', icon: '#f9a8d4' },
     'twitter':      { bg: '#063b5c', border: '#38bdf8', icon: '#7dd3fc' },
@@ -439,7 +443,9 @@ const App = () => {
     const color = PLATFORM_COLORS[key]?.icon || 'var(--accent-purple)';
     if (!platform) return <Globe size={18} color={color} />;
     switch (platform.toLowerCase()) {
+      case 'gmail': return <Mail size={18} color={color} />;
       case 'facebook': return <Facebook size={18} color={color} />;
+
       case 'instagram': return <Instagram size={18} color={color} />;
       case 'twitter': return <Twitter size={18} color={color} />;
       case 'pinterest': return <Compass size={18} color={color} />;
@@ -637,7 +643,8 @@ const App = () => {
               </div>
 
               {/* Platform Cards */}
-              {['Facebook', 'Instagram', 'Twitter', 'Pinterest', 'TikTok', 'YouTube', 'Threads', 'Reddit', 'Quora', 'Truth Social', 'Tumblr', 'BeReal', 'Bluesky', 'Kaskus', 'Tokopedia', 'ShareChat'].map(platform => {
+              {['Gmail', 'Facebook', 'Instagram', 'Twitter', 'Pinterest', 'TikTok', 'YouTube', 'Threads', 'Reddit', 'Quora', 'Truth Social', 'Tumblr', 'BeReal', 'Bluesky', 'Kaskus', 'Tokopedia', 'ShareChat'].map(platform => {
+
                 const count = profiles.filter(p => p && p.platform && p.platform.toLowerCase() === platform.toLowerCase()).length;
                 const pKey = platform.toLowerCase();
                 const pColor = PLATFORM_COLORS[pKey] || { bg: '#0c0e27', border: '#6366f1', icon: '#818cf8' };
@@ -800,9 +807,9 @@ const App = () => {
                   const samePlat = filteredProfiles.filter(p => (p.platform||'').toLowerCase() === (profile.platform||'').toLowerCase());
                   const platIdx = samePlat.indexOf(profile) + 1;
                   const platPrefix = (profile.platform || '?').substring(0,2).toUpperCase();
-                  numBadge = `${platPrefix}#${String(platIdx).padStart(3,'0')}`;
+                  numBadge = `${platPrefix}#${platIdx}`;
                 } else {
-                  numBadge = `#${String(idx + 1).padStart(3, '0')}`;
+                  numBadge = `#${idx + 1}`;
                 }
                 return (
                 <div key={profile.id} className="profile-card" style={{position: 'relative', border: selectedIds.includes(profile.id) ? '2px solid var(--primary)' : '2px solid var(--border)'}}>
@@ -871,9 +878,33 @@ const App = () => {
                     </span>
                   )}
                 </div>
-                  <div className="info-row" style={{justifyContent: 'space-between'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
-                      <Globe size={14} /> {profile.proxy?.host ? `${profile.proxy.host}:${profile.proxy.port}` : 'No Proxy'}
+                  <div className="info-row" style={{justifyContent: 'space-between', flexDirection: 'column', gap: '5px'}}>
+                    {/* Email row */}
+                    {profile.email && (
+                      <div style={{display:'flex', alignItems:'center', gap:'5px', fontSize:'0.7rem', color:'var(--text-dim)', width:'100%'}}>
+                        <Mail size={12} color="var(--neon-cyan)" />
+                        <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1}}>{profile.email}</span>
+                      </div>
+                    )}
+                    {/* Password row */}
+                    {profile.password && (
+                      <div style={{display:'flex', alignItems:'center', gap:'5px', fontSize:'0.7rem', color:'var(--text-dim)', width:'100%'}}>
+                        <Shield size={12} color="var(--primary-bright)" />
+                        <span style={{flex:1, fontFamily:'monospace', letterSpacing: showPasswords[profile.id] ? '0' : '2px'}}>
+                          {showPasswords[profile.id] ? profile.password : '••••••••'}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowPasswords(prev => ({...prev, [profile.id]: !prev[profile.id]})); }}
+                          style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'0'}}
+                          title={showPasswords[profile.id] ? 'Hide password' : 'Show password'}
+                        >
+                          {showPasswords[profile.id] ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+                      </div>
+                    )}
+                    {/* Proxy row */}
+                    <div style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize:'0.7rem', color:'var(--text-dim)'}}>
+                      <Globe size={12} /> {profile.proxy?.host ? `${profile.proxy.host}:${profile.proxy.port}` : 'No Proxy'}
                     </div>
                     {(profile.platform?.toLowerCase() === 'tiktok') && profile.status === 'running' && (
                       <button 
@@ -889,6 +920,7 @@ const App = () => {
                       </button>
                     )}
                   </div>
+
                   {profile.status === 'running' ? (
                     <button className="btn btn-secondary" style={{width: '100%', color: 'var(--danger)', borderColor: 'var(--danger)'}} onClick={(e) => { e.stopPropagation(); stopProfile(profile.id); }}>🛑 Stop Session</button>
                   ) : (
@@ -1063,6 +1095,7 @@ const App = () => {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
               <div><label>Platform</label>
                 <select value={newProfile.platform} onChange={e=>setNewProfile({...newProfile,platform:e.target.value})}>
+                  <option value="gmail">📧 Gmail (Google)</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
                   <option value="twitter">X / Twitter</option>
@@ -1223,6 +1256,7 @@ const App = () => {
               <div>
                 <label>Platform</label>
                 <select value={editingProfile.platform || 'facebook'} onChange={e => setEditingProfile({...editingProfile, platform: e.target.value})}>
+                  <option value="gmail">📧 Gmail (Google)</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
                   <option value="twitter">X / Twitter</option>
@@ -1328,6 +1362,7 @@ const App = () => {
                 <label>Platform</label>
                 <select value={bulkEditData.platform} onChange={e => setBulkEditData({...bulkEditData, platform: e.target.value})}>
                   <option value="">(Keep Unchanged)</option>
+                  <option value="gmail">📧 Gmail (Google)</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
                   <option value="twitter">X / Twitter</option>

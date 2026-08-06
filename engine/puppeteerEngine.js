@@ -99,21 +99,24 @@ async function launchProfile(profile) {
   }
 
   const action = (profile.action || 'signin').toLowerCase();
-  const url = getURL(profile.platform, action, isDesktop);
-  console.log(`Launching profile ${profile.name} [${viewMode.toUpperCase()} | ${action.toUpperCase()}] on ${profile.platform} -> ${url}`);
-  
+  const platform = (profile.platform || '').toLowerCase().trim();
+  const url = getURL(platform, action, isDesktop);
+  console.log(`Launching profile ${profile.name} [${viewMode.toUpperCase()} | ${action.toUpperCase()}] on ${platform} -> ${url}`);
+
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    
-    // Auto-fill credentials if provided
-    if (profile.email || profile.password) {
+
+    // ── Gmail-specific signin automation ─────────────────────────────────────
+    if (platform === 'gmail' && action === 'signin' && profile.email && profile.password) {
+      await gmailSignin(page, profile.email, profile.password);
+    }
+    // ── Generic auto-fill for other platforms ────────────────────────────────
+    else if (action === 'signin' && (profile.email || profile.password)) {
       console.log(`Auto-filling credentials for profile: ${profile.name}`);
-      await page.evaluate(async (emailVal, passVal, mode) => {
+      await page.evaluate(async (emailVal, passVal) => {
         const sleep = (ms) => new Promise(res => setTimeout(res, ms));
-        
-        // Find email/username field
         const emailSelectors = [
-          'input[type="email"]', 'input[name="email"]', 'input[name="username"]', 
+          'input[type="email"]', 'input[name="email"]', 'input[name="username"]',
           'input[name="login"]', 'input[autocomplete="username"]', 'input[type="text"]'
         ];
         let emailInput = null;
@@ -121,17 +124,14 @@ async function launchProfile(profile) {
           emailInput = document.querySelector(sel);
           if (emailInput) break;
         }
-
         if (emailInput && emailVal) {
           emailInput.focus();
           emailInput.value = emailVal;
           emailInput.dispatchEvent(new Event('input', { bubbles: true }));
           emailInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
-
-        // Find password field
         const passSelectors = [
-          'input[type="password"]', 'input[name="password"]', 'input[name="pass"]', 
+          'input[type="password"]', 'input[name="password"]', 'input[name="pass"]',
           'input[autocomplete="current-password"]', 'input[autocomplete="new-password"]'
         ];
         let passInput = null;
@@ -139,18 +139,15 @@ async function launchProfile(profile) {
           passInput = document.querySelector(sel);
           if (passInput) break;
         }
-
         if (passInput && passVal) {
           passInput.focus();
           passInput.value = passVal;
           passInput.dispatchEvent(new Event('input', { bubbles: true }));
           passInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
-
-        // Scroll form into clear focus view
         const form = document.querySelector('form, #loginform, .login_form, [role="main"], main');
         if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, profile.email || '', profile.password || '', action).catch(() => {});
+      }, profile.email || '', profile.password || '').catch(() => {});
     }
   } catch (navErr) {
     console.warn("Navigation timeout, proceeding anyway:", navErr.message);
@@ -158,6 +155,52 @@ async function launchProfile(profile) {
 
   return browser;
 }
+
+// ── Gmail Signin — Multi-step (email → Next → password → Next) ───────────────
+async function gmailSignin(page, email, password) {
+  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+  const typeHuman = async (el, text) => {
+    await el.click({ clickCount: 3 });
+    for (const ch of text) {
+      await el.type(ch, { delay: 60 + Math.random() * 80 });
+    }
+  };
+
+  try {
+    console.log('[Gmail] Waiting for email field...');
+    await page.waitForSelector('input[type="email"]', { timeout: 15000 });
+    const emailField = await page.$('input[type="email"]');
+    if (emailField) {
+      await typeHuman(emailField, email);
+      await sleep(600);
+      // Click Next
+      const nextBtn = await page.$('#identifierNext, [jsname="LgbsSe"], button[type="button"]');
+      if (nextBtn) await nextBtn.click();
+      else await page.keyboard.press('Enter');
+      console.log('[Gmail] Email entered, clicked Next');
+    }
+
+    // Wait for password field
+    await sleep(2500);
+    await page.waitForSelector('input[type="password"]', { timeout: 15000 });
+    const passField = await page.$('input[type="password"]');
+    if (passField) {
+      await passField.click();
+      await sleep(400);
+      await typeHuman(passField, password);
+      await sleep(600);
+      // Click Next/Sign in
+      const passNext = await page.$('#passwordNext, [jsname="LgbsSe"], button[type="button"]');
+      if (passNext) await passNext.click();
+      else await page.keyboard.press('Enter');
+      console.log('[Gmail] Password entered, clicked Sign In');
+    }
+  } catch (err) {
+    console.warn('[Gmail] Signin automation error (user can continue manually):', err.message);
+  }
+}
+
 
 function getURL(platform, action = 'signin', isDesktop = false) {
   if (!platform || typeof platform !== 'string') return "https://google.com";
@@ -181,6 +224,11 @@ function getURL(platform, action = 'signin', isDesktop = false) {
       return isSignup ? "https://x.com/i/flow/signup" : "https://x.com/i/flow/login";
     case "tiktok":
       return isSignup ? "https://www.tiktok.com/signup" : "https://www.tiktok.com/login";
+    case "gmail":
+    case "google":
+      return isSignup
+        ? "https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp"
+        : "https://accounts.google.com/signin/v2/identifier?flowName=GlifWebSignIn&flowEntry=ServiceLogin";
     case "youtube":
       return isSignup ? "https://accounts.google.com/SignUp" : "https://accounts.google.com/ServiceLogin";
     case "threads":
