@@ -101,7 +101,8 @@ const App = () => {
 
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [updateStatus, setUpdateStatus] = useState(null);
-  const [currentAppVersion, setCurrentAppVersion] = useState('1.0.2');
+  const [currentAppVersion, setCurrentAppVersion] = useState('1.0.4');
+
   const [showPasswords, setShowPasswords] = useState({});
 
 

@@ -1,6 +1,7 @@
 {
   "name": "phantom-swarm",
-  "version": "1.0.3",
+  "version": "1.0.4",
+
   "description": "Multi-profile social media automation browser",
   "author": "Phantom Swarm",
   "main": "main.js",
