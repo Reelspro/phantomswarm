@@ -5,9 +5,11 @@ import {
   CheckCircle, Clock, Search, Shield, Smartphone, Save, 
   Trash2, Copy, Zap, Fingerprint, Upload, Bot, Send, Loader2,
   Facebook, Instagram, Twitter, Compass, LayoutGrid, UserPlus, RefreshCw, Music, X, LogIn,
-  AtSign, Hash, BookOpen, Flag, Eye, EyeOff, Mail,
+  AtSign, Hash, BookOpen, Flag, Eye, EyeOff, Mail, LogOut,
   BookMarked, Camera, Wind, MessageSquare, ShoppingBag, Share2, Edit, Pencil
 } from 'lucide-react';
+import AuthModal from './AuthModal';
+import { auth, onAuthStateChanged, signOut } from '../core/firebaseConfig';
 
 const PLATFORM_INFO = {
   facebook:       { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
@@ -103,7 +105,16 @@ const App = () => {
   const [currentAppVersion, setCurrentAppVersion] = useState('1.0.4');
 
   const [showPasswords, setShowPasswords] = useState({});
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubAuth();
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -556,7 +567,30 @@ const App = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0e1a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#00ff87',
+        fontFamily: 'sans-serif'
+      }}>
+        <Loader2 size={40} className="spin" style={{ marginBottom: '16px' }} />
+        <div style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '1px' }}>INITIALIZING PHANTOM SWARM AUTH...</div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <AuthModal onAuthSuccess={(user) => setCurrentUser(user)} />;
+  }
+
   return (
+
     <div className="app-container">
       <div className="sidebar">
         <div className="logo">
@@ -569,6 +603,46 @@ const App = () => {
           <div className={`nav-item ${activeTab === 'devices' ? 'active' : ''}`} onClick={() => setActiveTab('devices')}><Monitor size={20} /> Devices</div>
           <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}><Settings size={20} /> Settings</div>
         </div>
+
+        {currentUser && (
+          <div style={{
+            marginTop: 'auto',
+            padding: '14px 12px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderTop: '1px solid var(--border)',
+            borderRadius: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px'
+          }}>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentUser.displayName || 'Swarm User'}
+              </div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentUser.email}
+              </div>
+            </div>
+            <button
+              onClick={() => signOut(auth)}
+              style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: 'var(--danger)',
+                padding: '8px',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Log out of Phantom Swarm"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="main-content">

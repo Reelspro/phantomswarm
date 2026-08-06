@@ -1,7 +1,6 @@
 {
   "name": "phantom-swarm",
   "version": "1.0.4",
-
   "description": "Multi-profile social media automation browser",
   "author": "Phantom Swarm",
   "main": "main.js",
@@ -18,6 +17,7 @@
   "dependencies": {
     "dotenv": "^16.3.1",
     "electron-updater": "^6.8.9",
+    "firebase": "^12.17.1",
     "lucide-react": "^0.284.0",
     "puppeteer": "^21.3.8",
     "react": "^18.2.0",
