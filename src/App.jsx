@@ -148,12 +148,28 @@ const App = () => {
   const LANG_GROUP_KEYS = ['english', 'urdu-hindi', 'indonesian'];
 
   const matchesLangGroup = (p, key) => {
-    if (key === 'english') return !p.postLanguage || p.postLanguage === 'english';
-    if (key === 'urdu-hindi') return ['urdu', 'hindi', 'urdu+hindi', 'urdu-hindi'].includes((p.postLanguage || '').toLowerCase());
-    if (key === 'indonesian') return (p.postLanguage || '').toLowerCase() === 'indonesian'
-      || ['kaskus', 'tokopedia'].includes((p.platform || '').toLowerCase());
+    const lang = (p?.postLanguage || '').toLowerCase();
+    const plat = (p?.platform || '').toLowerCase();
+
+    if (key === 'indonesian') {
+      return ['indonesian', 'indo', 'bahasa', 'indonesia'].includes(lang)
+        || (lang === 'local' && ['kaskus', 'tokopedia'].includes(plat))
+        || ['kaskus', 'tokopedia'].includes(plat);
+    }
+    if (key === 'urdu-hindi') {
+      return ['urdu', 'hindi', 'urdu+hindi', 'urdu-hindi', 'pkin'].includes(lang)
+        || (lang === 'local' && plat === 'sharechat')
+        || plat === 'sharechat';
+    }
+    if (key === 'english') {
+      return !lang || lang === 'english' || lang === 'gb' || (
+        !['indonesian', 'indo', 'bahasa', 'indonesia', 'urdu', 'hindi', 'urdu+hindi', 'urdu-hindi', 'pkin'].includes(lang) &&
+        !['kaskus', 'tokopedia', 'sharechat'].includes(plat)
+      );
+    }
     return false;
   };
+
 
   const filteredProfiles = (Array.isArray(profiles) ? profiles : []).filter(p => {
     if (!p) return false;
@@ -486,16 +502,24 @@ const App = () => {
         
         const fingerprint = await window.electron.generateFingerprint('random');
         
+        const isLangGroup = LANG_GROUP_KEYS.includes(filterPlatform);
+        const targetPlatform = isLangGroup ? 'facebook' : filterPlatform;
+        const targetLang = isLangGroup 
+          ? (filterPlatform === 'indonesian' ? 'indonesian' : filterPlatform === 'urdu-hindi' ? 'urdu+hindi' : 'english')
+          : 'english';
+
         const profile = { 
           id: `${Date.now()}-${i}`, 
           name: profileName, 
-          platform: filterPlatform, 
+          platform: targetPlatform, 
+          postLanguage: targetLang,
           proxy: {}, // Default to no proxy, user can add later
           device: fingerprint, 
           email,
           password,
           status: 'idle' 
         };
+
         await window.electron.createProfile(profile);
         successCount++;
       }
@@ -789,11 +813,17 @@ const App = () => {
                       <LogIn size={14} /> Bulk Login
                     </button>
                     <button className="btn btn-primary" style={{padding: '6px 12px'}} onClick={() => {
-                      setNewProfile(p => ({...p, platform: filterPlatform}));
+                      if (LANG_GROUP_KEYS.includes(filterPlatform)) {
+                        const targetLang = filterPlatform === 'indonesian' ? 'indonesian' : filterPlatform === 'urdu-hindi' ? 'urdu+hindi' : 'english';
+                        setNewProfile(p => ({...p, platform: 'facebook', postLanguage: targetLang}));
+                      } else {
+                        setNewProfile(p => ({...p, platform: filterPlatform}));
+                      }
                       setShowProfileModal(true);
                     }}>
                       <Plus size={14} /> Add Profile
                     </button>
+
                   </>
                 )}
               </div>
@@ -870,11 +900,15 @@ const App = () => {
                       {PLATFORM_INFO[profile.platform?.toLowerCase()]?.flag} {PLATFORM_INFO[profile.platform?.toLowerCase()]?.country}
                     </span>
                   )}
-                  {profile.postLanguage && profile.postLanguage !== 'english' && (
+                  {profile.postLanguage && (
                     <span className="chip" style={{color:'var(--primary-bright)', fontSize:'0.6rem'}}>
-                      🌐 {profile.postLanguage === 'local'
-                        ? (PLATFORM_INFO[profile.platform?.toLowerCase()]?.localLang || 'Local')
-                        : 'Bilingual'}
+                      {profile.postLanguage === 'indonesian' ? '🇮🇩 Indonesian' :
+                       profile.postLanguage === 'urdu' ? '🇵🇰 Urdu' :
+                       profile.postLanguage === 'hindi' ? '🇮🇳 Hindi' :
+                       profile.postLanguage === 'urdu+hindi' || profile.postLanguage === 'urdu-hindi' ? '🇵🇰🇮🇳 Urdu+Hindi' :
+                       profile.postLanguage === 'local' ? (PLATFORM_INFO[profile.platform?.toLowerCase()]?.localLang || 'Local') :
+                       profile.postLanguage === 'bilingual' ? '🔀 Bilingual' :
+                       '🇬🇧 English'}
                     </span>
                   )}
                 </div>
@@ -1152,7 +1186,11 @@ const App = () => {
               <div>
                 <label>Post Language</label>
                 <select value={newProfile.postLanguage} onChange={e=>setNewProfile({...newProfile, postLanguage:e.target.value})}>
-                  <option value="english">🌐 English</option>
+                  <option value="english">🇬🇧 English Group</option>
+                  <option value="indonesian">🇮🇩 Indonesian Group (Bahasa)</option>
+                  <option value="urdu+hindi">🇵🇰🇮🇳 Urdu + Hindi Group</option>
+                  <option value="urdu">🇵🇰 Urdu</option>
+                  <option value="hindi">🇮🇳 Hindi</option>
                   {PLATFORM_INFO[newProfile.platform]?.localLang && (
                     <option value="local">{PLATFORM_INFO[newProfile.platform]?.flag} {PLATFORM_INFO[newProfile.platform]?.localLang} (Local)</option>
                   )}
@@ -1295,7 +1333,11 @@ const App = () => {
               <div>
                 <label>Post Language</label>
                 <select value={editingProfile.postLanguage || 'english'} onChange={e => setEditingProfile({...editingProfile, postLanguage: e.target.value})}>
-                  <option value="english">🌐 English</option>
+                  <option value="english">🇬🇧 English Group</option>
+                  <option value="indonesian">🇮🇩 Indonesian Group (Bahasa)</option>
+                  <option value="urdu+hindi">🇵🇰🇮🇳 Urdu + Hindi Group</option>
+                  <option value="urdu">🇵🇰 Urdu</option>
+                  <option value="hindi">🇮🇳 Hindi</option>
                   <option value="local">Local Language</option>
                   <option value="bilingual">🔀 Bilingual</option>
                 </select>
@@ -1404,7 +1446,11 @@ const App = () => {
                 <label>Post Language</label>
                 <select value={bulkEditData.postLanguage} onChange={e => setBulkEditData({...bulkEditData, postLanguage: e.target.value})}>
                   <option value="">(Keep Unchanged)</option>
-                  <option value="english">🌐 English</option>
+                  <option value="english">🇬🇧 English Group</option>
+                  <option value="indonesian">🇮🇩 Indonesian Group (Bahasa)</option>
+                  <option value="urdu+hindi">🇵🇰🇮🇳 Urdu + Hindi Group</option>
+                  <option value="urdu">🇵🇰 Urdu</option>
+                  <option value="hindi">🇮🇳 Hindi</option>
                   <option value="local">Local Language</option>
                   <option value="bilingual">🔀 Bilingual</option>
                 </select>
