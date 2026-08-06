@@ -142,10 +142,23 @@ const App = () => {
     }
   };
 
+  const LANG_GROUP_KEYS = ['english', 'urdu-hindi', 'indonesian'];
+
+  const matchesLangGroup = (p, key) => {
+    if (key === 'english') return !p.postLanguage || p.postLanguage === 'english';
+    if (key === 'urdu-hindi') return ['urdu', 'hindi', 'urdu+hindi', 'urdu-hindi'].includes((p.postLanguage || '').toLowerCase());
+    if (key === 'indonesian') return (p.postLanguage || '').toLowerCase() === 'indonesian'
+      || ['kaskus', 'tokopedia'].includes((p.platform || '').toLowerCase());
+    return false;
+  };
+
   const filteredProfiles = (Array.isArray(profiles) ? profiles : []).filter(p => {
-    if (!p || !p.platform) return filterPlatform === 'all';
-    return filterPlatform === 'all' || p.platform.toLowerCase() === filterPlatform.toLowerCase();
+    if (!p) return false;
+    if (LANG_GROUP_KEYS.includes(filterPlatform)) return matchesLangGroup(p, filterPlatform);
+    if (filterPlatform === 'all') return true;
+    return p.platform && p.platform.toLowerCase() === filterPlatform.toLowerCase();
   });
+
 
   const fetchProxies = async () => {
     try {
@@ -415,6 +428,12 @@ const App = () => {
     'sharechat':    { bg: '#7a2d00', border: '#fb923c', icon: '#fdba74' },
   };
 
+  const LANGUAGE_GROUP_COLORS = {
+    'english':    { bg: '#062038', border: '#3b82f6', icon: '#60a5fa', flag: '🇬🇧', label: 'English' },
+    'urdu-hindi': { bg: '#1a0830', border: '#a855f7', icon: '#c084fc', flag: '🇵🇰🇮🇳', label: 'Urdu + Hindi' },
+    'indonesian': { bg: '#052210', border: '#22c55e', icon: '#4ade80', flag: '🇮🇩', label: 'Indonesian' },
+  };
+
   const getPlatformIcon = (platform) => {
     const key = platform ? platform.toLowerCase() : 'all';
     const color = PLATFORM_COLORS[key]?.icon || 'var(--accent-purple)';
@@ -652,6 +671,57 @@ const App = () => {
               })}
             </div>
 
+            {/* 🌐 Language Groups Row */}
+            <div style={{ marginTop: '20px', marginBottom: '8px' }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: '800', color: 'var(--text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Globe size={11} /> Language Groups
+              </div>
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                {Object.entries(LANGUAGE_GROUP_COLORS).map(([key, lc]) => {
+                  const langProfiles = (Array.isArray(profiles) ? profiles : []).filter(p => p && matchesLangGroup(p, key));
+                  const count = langProfiles.length;
+                  const isActive = filterPlatform === key;
+                  // Per-platform breakdown
+                  const platformBreakdown = ['Facebook','Instagram','Twitter','TikTok','YouTube','Pinterest','Threads','Reddit','Quora','Truth Social','Tumblr','BeReal','Bluesky','Kaskus','Tokopedia','ShareChat']
+                    .map(plat => ({ plat, c: langProfiles.filter(p => (p.platform||'').toLowerCase() === plat.toLowerCase()).length }))
+                    .filter(x => x.c > 0);
+                  return (
+                    <div
+                      key={key}
+                      className={`group-card ${isActive ? 'active' : ''}`}
+                      onClick={() => setFilterPlatform(key)}
+                      style={{
+                        background: lc.bg,
+                        borderColor: isActive ? lc.border : `${lc.border}55`,
+                        boxShadow: isActive ? `0 0 24px ${lc.border}70` : 'none',
+                        minWidth: '150px', flex: '1', maxWidth: '220px',
+                      }}
+                    >
+                      <div className="group-card-header">
+                        <span style={{ fontSize: '1.3rem' }}>{lc.flag}</span>
+                        <span className="group-card-count" style={{ color: lc.icon, fontSize: '1.4rem' }}>{count}</span>
+                      </div>
+                      <div className="group-card-label" style={{ color: '#ffffff', fontWeight: '800' }}>{lc.label}</div>
+                      <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                        {platformBreakdown.length === 0
+                          ? <span style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)' }}>No profiles</span>
+                          : platformBreakdown.map(({ plat, c }) => (
+                            <span key={plat} style={{
+                              fontSize: '0.58rem', fontWeight: '700',
+                              background: `${lc.border}22`, border: `1px solid ${lc.border}55`,
+                              color: lc.icon, borderRadius: '4px', padding: '1px 5px'
+                            }}>
+                              {plat.substring(0,2).toUpperCase()}: {c}
+                            </span>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="stats-grid">
               <div className="stat-card"><div className="stat-label">Total Profiles</div><div className="stat-value">{profiles.length}</div></div>
               <div className="stat-card"><div className="stat-label">Active</div><div className="stat-value">{profiles.filter(p => p.status === 'running').length}</div></div>
@@ -659,10 +729,35 @@ const App = () => {
             </div>
             
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', padding: '10px 0', borderBottom: '1px solid var(--border)'}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                <h2 style={{fontSize: '1rem', textTransform: 'capitalize'}}>{filterPlatform} Group</h2>
+              <div style={{display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap'}}>
+                <h2 style={{fontSize: '1rem', textTransform: 'capitalize'}}>
+                  {LANG_GROUP_KEYS.includes(filterPlatform)
+                    ? `${LANGUAGE_GROUP_COLORS[filterPlatform]?.flag} ${LANGUAGE_GROUP_COLORS[filterPlatform]?.label} Group`
+                    : `${filterPlatform} Group`}
+                </h2>
                 <span className="chip" style={{background: 'var(--primary)', color: 'white'}}>{filteredProfiles.length} Profiles</span>
+                {LANG_GROUP_KEYS.includes(filterPlatform) && (() => {
+                  const lc = LANGUAGE_GROUP_COLORS[filterPlatform];
+                  return ['Facebook','Instagram','Twitter','TikTok','YouTube','Pinterest','Threads','Reddit','Quora','Truth Social','Tumblr','BeReal','Bluesky','Kaskus','Tokopedia','ShareChat'].map(plat => {
+                    const pCount = filteredProfiles.filter(p => (p.platform||'').toLowerCase() === plat.toLowerCase()).length;
+                    if (!pCount) return null;
+                    const pColor = PLATFORM_COLORS[plat.toLowerCase()];
+                    return (
+                      <span key={plat} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        background: pColor ? pColor.bg : '#111',
+                        border: `1px solid ${pColor ? pColor.border : '#6366f1'}`,
+                        color: pColor ? pColor.icon : '#818cf8',
+                        borderRadius: '6px', padding: '2px 8px',
+                        fontSize: '0.65rem', fontWeight: '800'
+                      }}>
+                        {getPlatformIcon(plat)} {plat}: {pCount}
+                      </span>
+                    );
+                  });
+                })()}
               </div>
+
               <div style={{display: 'flex', gap: '8px'}}>
                 {filterPlatform !== 'all' && (
                   <>
@@ -698,7 +793,18 @@ const App = () => {
             </div>
 
             <div className="profile-grid">
-              {filteredProfiles.map((profile, idx) => (
+              {filteredProfiles.map((profile, idx) => {
+                // Per-platform numbering inside language groups
+                let numBadge;
+                if (LANG_GROUP_KEYS.includes(filterPlatform)) {
+                  const samePlat = filteredProfiles.filter(p => (p.platform||'').toLowerCase() === (profile.platform||'').toLowerCase());
+                  const platIdx = samePlat.indexOf(profile) + 1;
+                  const platPrefix = (profile.platform || '?').substring(0,2).toUpperCase();
+                  numBadge = `${platPrefix}#${String(platIdx).padStart(3,'0')}`;
+                } else {
+                  numBadge = `#${String(idx + 1).padStart(3, '0')}`;
+                }
+                return (
                 <div key={profile.id} className="profile-card" style={{position: 'relative', border: selectedIds.includes(profile.id) ? '2px solid var(--primary)' : '2px solid var(--border)'}}>
                   <div style={{position: 'absolute', top: '15px', left: '15px', zIndex: 10}}>
                     <input type="checkbox" checked={selectedIds.includes(profile.id)} 
@@ -711,8 +817,9 @@ const App = () => {
                       }} style={{width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)'}} />
                   </div>
                   <div style={{position: 'absolute', top: '15px', right: '75px', fontSize: '0.65rem', fontWeight: '900', color: 'var(--primary-bright)', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px'}}>
-                    #{String(idx + 1).padStart(3, '0')}
+                    {numBadge}
                   </div>
+
                   <button onClick={(e) => {
                     e.stopPropagation();
                     handleOpenEditModal(profile);
@@ -788,8 +895,9 @@ const App = () => {
                     <button className="btn btn-primary" style={{width: '100%'}} onClick={(e) => { e.stopPropagation(); launchProfile(profile); }}>Launch Session</button>
                   )}
                 </div>
-              ))}
+              );})}
               {filteredProfiles.length === 0 && <div className="empty-state" style={{gridColumn: '1/-1'}}><Search size={48} /><p>No profiles found for this category</p></div>}
+
             </div>
           </>
         )}
