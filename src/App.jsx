@@ -9,7 +9,6 @@ import {
   BookMarked, Camera, Wind, MessageSquare, ShoppingBag, Share2, Edit, Pencil
 } from 'lucide-react';
 import AuthModal from './AuthModal';
-import { auth, onAuthStateChanged, signOut } from '../core/firebaseConfig';
 
 const PLATFORM_INFO = {
   facebook:       { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
@@ -109,12 +108,21 @@ const App = () => {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthLoading(false);
-    });
-    return () => unsubAuth();
+    const checkAuth = async () => {
+      try {
+        if (window.electron.authGetCurrentUser) {
+          const user = await window.electron.authGetCurrentUser();
+          setCurrentUser(user);
+        }
+      } catch (err) {
+        console.error("Auth check error:", err);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
+
 
   useEffect(() => {
     fetchData();
@@ -618,14 +626,18 @@ const App = () => {
           }}>
             <div style={{ overflow: 'hidden' }}>
               <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentUser.displayName || 'Swarm User'}
+                {currentUser.name || currentUser.displayName || 'Swarm User'}
               </div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser.email}
               </div>
             </div>
             <button
-              onClick={() => signOut(auth)}
+              onClick={async () => {
+                await window.electron.authLogout();
+                setCurrentUser(null);
+              }}
+
               style={{
                 background: 'rgba(239, 68, 68, 0.15)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',

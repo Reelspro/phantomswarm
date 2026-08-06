@@ -25,7 +25,7 @@ process.on('uncaughtException', (err) => {
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 
 // ── Managers (app.whenReady ke baad load hote hain) ──────────────────────────
-let profileManager, queueManager, deviceManager, launchProfile, nameGenerator;
+let profileManager, queueManager, deviceManager, launchProfile, nameGenerator, authManager;
 
 function loadManagers() {
   profileManager = require("./core/profileManager");
@@ -33,6 +33,7 @@ function loadManagers() {
   deviceManager  = require("./core/deviceManager");
   ({ launchProfile } = require("./engine/puppeteerEngine"));
   nameGenerator  = require("./core/nameGenerator");
+  authManager    = require("./core/authManager");
 }
 
 // ── Active browser instances ──────────────────────────────────────────────────
@@ -178,6 +179,26 @@ function loadPhantomConfig() {
 
 // ── IPC Handlers ──────────────────────────────────────────────────────────────
 function registerIpcHandlers() {
+
+  ipcMain.handle("auth-login", async (event, data) => {
+    return await authManager.login(data);
+  });
+
+  ipcMain.handle("auth-register", async (event, data) => {
+    return await authManager.register(data);
+  });
+
+  ipcMain.handle("auth-reset-password", async (event, data) => {
+    return await authManager.resetPassword(data);
+  });
+
+  ipcMain.handle("auth-get-current-user", async () => {
+    return await authManager.getCurrentUser();
+  });
+
+  ipcMain.handle("auth-logout", async () => {
+    return await authManager.logout();
+  });
 
   ipcMain.handle("get-app-version", async () => {
     return app.getVersion();

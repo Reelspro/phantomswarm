@@ -1,6 +1,12 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electron", {
+  authLogin: (data) => ipcRenderer.invoke("auth-login", data),
+
+  authRegister: (data) => ipcRenderer.invoke("auth-register", data),
+  authResetPassword: (data) => ipcRenderer.invoke("auth-reset-password", data),
+  authGetCurrentUser: () => ipcRenderer.invoke("auth-get-current-user"),
+  authLogout: () => ipcRenderer.invoke("auth-logout"),
   getProfiles: () => ipcRenderer.invoke("get-profiles"),
   getProxies: () => ipcRenderer.invoke("get-proxies"),
   getDevices: () => ipcRenderer.invoke("get-devices"),

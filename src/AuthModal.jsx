@@ -3,13 +3,6 @@ import {
   Zap, Lock, Mail, User, KeyRound, Eye, EyeOff, ArrowRight, 
   CheckCircle, AlertCircle, Loader2, ShieldCheck, RefreshCw 
 } from 'lucide-react';
-import { 
-  auth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  sendPasswordResetEmail, 
-  updateProfile 
-} from '../core/firebaseConfig';
 
 export default function AuthModal({ onAuthSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
@@ -45,17 +38,15 @@ export default function AuthModal({ onAuthSuccess }) {
     }
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      if (onAuthSuccess) onAuthSuccess(userCredential.user);
-    } catch (err) {
-      console.error('Firebase Login Error:', err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password. Please check your credentials.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Access temporarily disabled due to too many failed attempts. Please try again later.');
+      const res = await window.electron.authLogin({ email, password });
+      if (res.success) {
+        if (onAuthSuccess) onAuthSuccess(res.user);
       } else {
-        setError(err.message || 'Login failed. Please try again.');
+        setError(res.error || 'Login failed. Please check your credentials.');
       }
+    } catch (err) {
+      console.error('Login Error:', err);
+      setError('Login failed: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -83,23 +74,18 @@ export default function AuthModal({ onAuthSuccess }) {
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name });
-      setSuccessMsg('Account created successfully! Logging you in...');
-      setTimeout(() => {
-        if (onAuthSuccess) onAuthSuccess(userCredential.user);
-      }, 1000);
-    } catch (err) {
-      console.error('Firebase Register Error:', err);
-      if (err.code === 'auth/email-already-in-use') {
-        setError('An account with this email already exists. Please log in.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Invalid email address format.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Password is too weak. Please use a stronger password.');
+      const res = await window.electron.authRegister({ name, email, password });
+      if (res.success) {
+        setSuccessMsg('Account created successfully! Logging you in...');
+        setTimeout(() => {
+          if (onAuthSuccess) onAuthSuccess(res.user);
+        }, 800);
       } else {
-        setError(err.message || 'Registration failed. Please try again.');
+        setError(res.error || 'Registration failed.');
       }
+    } catch (err) {
+      console.error('Register Error:', err);
+      setError('Registration failed: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -108,28 +94,28 @@ export default function AuthModal({ onAuthSuccess }) {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     clearState();
-    if (!email.trim()) {
-      setError('Please enter your registered Gmail address.');
+    if (!email.trim() || !password) {
+      setError('Please enter your registered Gmail address and new password.');
       return;
     }
 
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email);
-      setSuccessMsg(`Password reset link sent to ${email}! Check your inbox/spam folder.`);
-    } catch (err) {
-      console.error('Firebase Reset Error:', err);
-      if (err.code === 'auth/user-not-found') {
-        setError('No registered account found with this email.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Invalid email address format.');
+      const res = await window.electron.authResetPassword({ email, newPassword: password });
+      if (res.success) {
+        setSuccessMsg(res.message || 'Password updated successfully! Redirecting to login...');
+        setTimeout(() => setMode('login'), 1500);
       } else {
-        setError(err.message || 'Failed to send password reset email.');
+        setError(res.error || 'Password reset failed.');
       }
+    } catch (err) {
+      console.error('Reset Error:', err);
+      setError('Failed to reset password: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div style={{
