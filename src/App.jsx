@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import deviceDataJson from '../core/deviceData.json';
 import { 
   Users, Plus, Play, Settings, Globe, Monitor, Layers, 
   CheckCircle, Clock, Search, Shield, Smartphone, Save, 
@@ -32,10 +33,7 @@ if (typeof window !== 'undefined' && !window.electron) {
   window.electron = {
     getProfiles: async () => [],
     getProxies: async () => [],
-    getDevices: async () => [
-      { id: 'iphone14', name: 'iPhone 14 Pro', platform: 'iOS', width: 393, height: 852 },
-      { id: 'galaxyS23', name: 'Samsung Galaxy S23', platform: 'Android', width: 360, height: 780 }
-    ],
+    getDevices: async () => deviceDataJson,
     getSettings: async () => ({ concurrency: '10' }),
     updateSetting: async () => ({}),
     createProfile: async () => ({}),
@@ -390,26 +388,48 @@ const App = () => {
     } finally { setIsAiLoading(false); }
   };
 
+  const PLATFORM_COLORS = {
+    'all':          { bg: '#1a1060', border: '#818cf8', icon: '#a5b4fc' },
+    'facebook':     { bg: '#0a3580', border: '#4a9aff', icon: '#60aaff' },
+    'instagram':    { bg: '#6b0f3a', border: '#f472b6', icon: '#f9a8d4' },
+    'twitter':      { bg: '#063b5c', border: '#38bdf8', icon: '#7dd3fc' },
+    'pinterest':    { bg: '#7a0a14', border: '#f87171', icon: '#fca5a5' },
+    'tiktok':       { bg: '#3a0a3a', border: '#e879f9', icon: '#f0abfc' },
+    'youtube':      { bg: '#7a0a0a', border: '#f87171', icon: '#fca5a5' },
+    'threads':      { bg: '#222222', border: '#d1d5db', icon: '#f9fafb' },
+    'reddit':       { bg: '#7a2400', border: '#fb923c', icon: '#fdba74' },
+    'quora':        { bg: '#6b0a0a', border: '#f87171', icon: '#fca5a5' },
+    'truth social': { bg: '#0a2a5c', border: '#60a5fa', icon: '#93c5fd' },
+    'tumblr':       { bg: '#0a1a40', border: '#67e8f9', icon: '#a5f3fc' },
+    'bereal':       { bg: '#1a1a1a', border: '#e5e7eb', icon: '#ffffff' },
+    'bluesky':      { bg: '#063a80', border: '#38bdf8', icon: '#7dd3fc' },
+    'kaskus':       { bg: '#6b0a0a', border: '#ef4444', icon: '#fca5a5' },
+    'tokopedia':    { bg: '#064a14', border: '#4ade80', icon: '#86efac' },
+    'sharechat':    { bg: '#7a2d00', border: '#fb923c', icon: '#fdba74' },
+  };
+
   const getPlatformIcon = (platform) => {
-    if (!platform) return <Globe size={18} color="var(--primary)" />;
+    const key = platform ? platform.toLowerCase() : 'all';
+    const color = PLATFORM_COLORS[key]?.icon || 'var(--accent-purple)';
+    if (!platform) return <Globe size={18} color={color} />;
     switch (platform.toLowerCase()) {
-      case 'facebook': return <Facebook size={18} color="#1877F2" />;
-      case 'instagram': return <Instagram size={18} color="#E4405F" />;
-      case 'twitter': return <Twitter size={18} color="#1DA1F2" />;
-      case 'pinterest': return <Compass size={18} color="#BD081C" />;
-      case 'tiktok': return <Music size={18} color="#FE2C55" />;
-      case 'youtube': return <Play size={18} color="#FF0000" />;
-      case 'threads': return <AtSign size={18} color="#FFFFFF" />;
-      case 'reddit': return <Hash size={18} color="#FF4500" />;
-      case 'quora': return <BookOpen size={18} color="#B92B27" />;
-      case 'truth social': return <Flag size={18} color="#5EAADE" />;
-      case 'tumblr':        return <BookMarked size={18} color="#35465C" />;
-      case 'bereal':        return <Camera size={18} color="#FFFFFF" />;
-      case 'bluesky':       return <Wind size={18} color="#0085FF" />;
-      case 'kaskus':        return <MessageSquare size={18} color="#DA251D" />;
-      case 'tokopedia':     return <ShoppingBag size={18} color="#03AC0E" />;
-      case 'sharechat':     return <Share2 size={18} color="#FF6C2F" />;
-      default: return <Globe size={18} color="var(--primary)" />;
+      case 'facebook': return <Facebook size={18} color={color} />;
+      case 'instagram': return <Instagram size={18} color={color} />;
+      case 'twitter': return <Twitter size={18} color={color} />;
+      case 'pinterest': return <Compass size={18} color={color} />;
+      case 'tiktok': return <Music size={18} color={color} />;
+      case 'youtube': return <Play size={18} color={color} />;
+      case 'threads': return <AtSign size={18} color={color} />;
+      case 'reddit': return <Hash size={18} color={color} />;
+      case 'quora': return <BookOpen size={18} color={color} />;
+      case 'truth social': return <Flag size={18} color={color} />;
+      case 'tumblr':        return <BookMarked size={18} color={color} />;
+      case 'bereal':        return <Camera size={18} color={color} />;
+      case 'bluesky':       return <Wind size={18} color={color} />;
+      case 'kaskus':        return <MessageSquare size={18} color={color} />;
+      case 'tokopedia':     return <ShoppingBag size={18} color={color} />;
+      case 'sharechat':     return <Share2 size={18} color={color} />;
+      default: return <Globe size={18} color={color} />;
     }
   };
 
@@ -573,26 +593,49 @@ const App = () => {
             )}
 
             <div className="group-grid">
-              <div className={`group-card ${filterPlatform === 'all' ? 'active' : ''}`} onClick={() => setFilterPlatform('all')}>
+              {/* All Groups Card */}
+              <div
+                className={`group-card ${filterPlatform === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterPlatform('all')}
+                style={{
+                  background: PLATFORM_COLORS['all'].bg,
+                  borderColor: filterPlatform === 'all' ? PLATFORM_COLORS['all'].border : `${PLATFORM_COLORS['all'].border}55`,
+                  boxShadow: filterPlatform === 'all' ? `0 0 20px ${PLATFORM_COLORS['all'].border}55` : 'none',
+                }}
+              >
                 <div className="group-card-header">
-                  <LayoutGrid size={20} color={filterPlatform === 'all' ? 'var(--primary)' : 'white'} />
+                  <LayoutGrid size={20} color={PLATFORM_COLORS['all'].icon} />
                   <span className="group-card-count">{profiles.length}</span>
                 </div>
                 <div className="group-card-label">All Groups</div>
               </div>
+
+              {/* Platform Cards */}
               {['Facebook', 'Instagram', 'Twitter', 'Pinterest', 'TikTok', 'YouTube', 'Threads', 'Reddit', 'Quora', 'Truth Social', 'Tumblr', 'BeReal', 'Bluesky', 'Kaskus', 'Tokopedia', 'ShareChat'].map(platform => {
                 const count = profiles.filter(p => p && p.platform && p.platform.toLowerCase() === platform.toLowerCase()).length;
+                const pKey = platform.toLowerCase();
+                const pColor = PLATFORM_COLORS[pKey] || { bg: '#0c0e27', border: '#6366f1', icon: '#818cf8' };
+                const isActive = filterPlatform === pKey;
                 return (
-                  <div key={platform} className={`group-card ${filterPlatform === platform.toLowerCase() ? 'active' : ''}`} onClick={() => setFilterPlatform(platform.toLowerCase())}>
+                  <div
+                    key={platform}
+                    className={`group-card ${isActive ? 'active' : ''}`}
+                    onClick={() => setFilterPlatform(pKey)}
+                    style={{
+                      background: pColor.bg,
+                      borderColor: isActive ? pColor.border : `${pColor.border}55`,
+                      boxShadow: isActive ? `0 0 22px ${pColor.border}60` : 'none',
+                    }}
+                  >
                     <div className="group-card-header">
                       {getPlatformIcon(platform)}
                       <span className="group-card-count">{count}</span>
                     </div>
-                    <div className="group-card-label">{platform}</div>
-                    <div style={{fontSize:'0.6rem', color:'var(--text-dim)', marginTop:'3px', lineHeight:'1.5'}}>
+                    <div className="group-card-label" style={{ color: '#ffffff' }}>{platform}</div>
+                    <div style={{fontSize:'0.62rem', color:'rgba(255,255,255,0.5)', marginTop:'3px', lineHeight:'1.5'}}>
                       {PLATFORM_INFO[platform.toLowerCase()]?.flag} {PLATFORM_INFO[platform.toLowerCase()]?.country}
                       {PLATFORM_INFO[platform.toLowerCase()]?.localLang && (
-                        <span style={{display:'block', color:'var(--primary-bright)', fontSize:'0.57rem'}}>
+                        <span style={{display:'block', color: pColor.border, fontSize:'0.57rem'}}>
                           {PLATFORM_INFO[platform.toLowerCase()]?.localLang}
                         </span>
                       )}
@@ -770,28 +813,34 @@ const App = () => {
         {activeTab === 'devices' && (
           <>
             <div className="header">
-              <div><h1>Device Templates</h1><p style={{color: 'var(--text-dim)', fontSize: '0.8rem'}}>{deviceTemplates.length} static mobile configurations</p></div>
+              <div><h1>Device Templates</h1><p style={{color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '4px'}}>{deviceTemplates.length} static mobile configurations</p></div>
               <input placeholder="Search devices..." value={deviceSearch} onChange={e => setDeviceSearch(e.target.value)} style={{maxWidth: '300px', margin: 0}} />
             </div>
             <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px',
-              maxHeight: 'calc(100vh - 180px)', overflowY: 'auto', paddingRight: '10px'
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px',
+              maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', paddingRight: '10px'
             }}>
               {deviceTemplates.filter(d => d.name.toLowerCase().includes(deviceSearch.toLowerCase())).map((device, idx) => (
                 <div key={idx} style={{
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '10px',
-                  padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px',
-                  transition: '0.2s', cursor: 'default'
-                }} onMouseOver={e => e.currentTarget.style.borderColor = 'var(--primary)'} onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                  background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px',
+                  padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px',
+                  transition: 'all 0.25s ease', cursor: 'default'
+                }} onMouseOver={e => {
+                  e.currentTarget.style.borderColor = 'var(--accent-purple)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.25)';
+                }} onMouseOut={e => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
-                      <Smartphone size={14} color="var(--primary)" />
-                      <span style={{fontSize: '0.8rem', fontWeight: 'bold', color: 'white'}}>{device.name}</span>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                      <Smartphone size={16} color="var(--accent-purple)" />
+                      <span style={{fontSize: '0.9rem', fontWeight: '800', color: '#ffffff'}}>{device.name}</span>
                     </div>
                   </div>
-                  <div style={{fontSize: '0.65rem', color: 'var(--text-dim)', display: 'flex', justifyContent: 'space-between'}}>
-                    <span>{device.platform}</span>
-                    <span style={{background: 'rgba(255,0,80,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'var(--primary-bright)'}}>
+                  <div style={{fontSize: '0.75rem', color: 'var(--text-dim)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{fontWeight: '600'}}>{device.platform}</span>
+                    <span style={{background: 'rgba(99, 102, 241, 0.15)', padding: '4px 10px', borderRadius: '8px', color: 'var(--accent-lime)', fontWeight: 'bold'}}>
                       {device.width}x{device.height}
                     </span>
                   </div>
