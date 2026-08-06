@@ -58,12 +58,24 @@ function updateProfileName(id, newName) {
 function deleteProfile(id) {
   const profiles = readJSON(PROFILES_FILE) || [];
   writeJSON(PROFILES_FILE, profiles.filter(p => p.id !== id));
+  try {
+    const pFolder = path.join(dataRoot, 'profiles', String(id));
+    if (fs.existsSync(pFolder)) fs.rmSync(pFolder, { recursive: true, force: true });
+  } catch (e) {}
   return Promise.resolve();
 }
 
 function deleteProfilesByIds(ids) {
   const profiles = readJSON(PROFILES_FILE) || [];
   writeJSON(PROFILES_FILE, profiles.filter(p => !ids.includes(p.id)));
+  if (Array.isArray(ids)) {
+    ids.forEach(id => {
+      try {
+        const pFolder = path.join(dataRoot, 'profiles', String(id));
+        if (fs.existsSync(pFolder)) fs.rmSync(pFolder, { recursive: true, force: true });
+      } catch (e) {}
+    });
+  }
   return Promise.resolve();
 }
 

@@ -34,8 +34,20 @@ async function launchProfile(profile) {
     args.push(`--proxy-server=${profile.proxy.host}:${profile.proxy.port}`);
   }
 
+  const fs = require("fs");
+  const path = require("path");
+
+  const dataRoot = process.env.APP_USER_DATA || path.join(__dirname, '..');
+  const profilesDir = path.join(dataRoot, 'profiles');
+  const profileDir = path.join(profilesDir, String(profile.id || 'default'));
+
+  if (!fs.existsSync(profilesDir)) {
+    fs.mkdirSync(profilesDir, { recursive: true });
+  }
+
   const launchOptions = {
     headless: false,
+    userDataDir: profileDir,
     args: args,
     defaultViewport: isDesktop ? null : {
       width: width,
