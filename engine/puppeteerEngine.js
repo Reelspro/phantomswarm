@@ -106,12 +106,8 @@ async function launchProfile(profile) {
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    // ── Gmail-specific signin automation ─────────────────────────────────────
-    if (platform === 'gmail' && action === 'signin' && profile.email && profile.password) {
-      await gmailSignin(page, profile.email, profile.password);
-    }
-    // ── Generic auto-fill for other platforms ────────────────────────────────
-    else if (action === 'signin' && (profile.email || profile.password)) {
+    // Auto-fill credentials if provided
+    if (action === 'signin' && (profile.email || profile.password)) {
       console.log(`Auto-filling credentials for profile: ${profile.name}`);
       await page.evaluate(async (emailVal, passVal) => {
         const sleep = (ms) => new Promise(res => setTimeout(res, ms));
@@ -156,53 +152,9 @@ async function launchProfile(profile) {
   return browser;
 }
 
-// ── Gmail Signin — Multi-step (email → Next → password → Next) ───────────────
-async function gmailSignin(page, email, password) {
-  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
-
-  const typeHuman = async (el, text) => {
-    await el.click({ clickCount: 3 });
-    for (const ch of text) {
-      await el.type(ch, { delay: 60 + Math.random() * 80 });
-    }
-  };
-
-  try {
-    console.log('[Gmail] Waiting for email field...');
-    await page.waitForSelector('input[type="email"]', { timeout: 15000 });
-    const emailField = await page.$('input[type="email"]');
-    if (emailField) {
-      await typeHuman(emailField, email);
-      await sleep(600);
-      // Click Next
-      const nextBtn = await page.$('#identifierNext, [jsname="LgbsSe"], button[type="button"]');
-      if (nextBtn) await nextBtn.click();
-      else await page.keyboard.press('Enter');
-      console.log('[Gmail] Email entered, clicked Next');
-    }
-
-    // Wait for password field
-    await sleep(2500);
-    await page.waitForSelector('input[type="password"]', { timeout: 15000 });
-    const passField = await page.$('input[type="password"]');
-    if (passField) {
-      await passField.click();
-      await sleep(400);
-      await typeHuman(passField, password);
-      await sleep(600);
-      // Click Next/Sign in
-      const passNext = await page.$('#passwordNext, [jsname="LgbsSe"], button[type="button"]');
-      if (passNext) await passNext.click();
-      else await page.keyboard.press('Enter');
-      console.log('[Gmail] Password entered, clicked Sign In');
-    }
-  } catch (err) {
-    console.warn('[Gmail] Signin automation error (user can continue manually):', err.message);
-  }
-}
-
 
 function getURL(platform, action = 'signin', isDesktop = false) {
+
   if (!platform || typeof platform !== 'string') return "https://google.com";
   const p = platform.toLowerCase().trim();
   const isSignup = action === 'signup';
@@ -224,11 +176,6 @@ function getURL(platform, action = 'signin', isDesktop = false) {
       return isSignup ? "https://x.com/i/flow/signup" : "https://x.com/i/flow/login";
     case "tiktok":
       return isSignup ? "https://www.tiktok.com/signup" : "https://www.tiktok.com/login";
-    case "gmail":
-    case "google":
-      return isSignup
-        ? "https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp"
-        : "https://accounts.google.com/signin/v2/identifier?flowName=GlifWebSignIn&flowEntry=ServiceLogin";
     case "youtube":
       return isSignup ? "https://accounts.google.com/SignUp" : "https://accounts.google.com/ServiceLogin";
     case "threads":

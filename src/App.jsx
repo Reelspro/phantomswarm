@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 
 const PLATFORM_INFO = {
-  gmail:          { country: 'Global',    flag: '📧', language: 'English', localLang: null },
   facebook:       { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
   instagram:      { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
   twitter:        { country: 'Global',    flag: '🌍', language: 'English', localLang: null },
@@ -430,7 +429,6 @@ const App = () => {
 
   const PLATFORM_COLORS = {
     'all':          { bg: '#1a1060', border: '#818cf8', icon: '#a5b4fc' },
-    'gmail':        { bg: '#3a0808', border: '#ea4335', icon: '#ff6b6b' },
     'facebook':     { bg: '#0a3580', border: '#4a9aff', icon: '#60aaff' },
     'instagram':    { bg: '#6b0f3a', border: '#f472b6', icon: '#f9a8d4' },
     'twitter':      { bg: '#063b5c', border: '#38bdf8', icon: '#7dd3fc' },
@@ -460,7 +458,6 @@ const App = () => {
     const color = PLATFORM_COLORS[key]?.icon || 'var(--accent-purple)';
     if (!platform) return <Globe size={18} color={color} />;
     switch (platform.toLowerCase()) {
-      case 'gmail': return <Mail size={18} color={color} />;
       case 'facebook': return <Facebook size={18} color={color} />;
 
       case 'instagram': return <Instagram size={18} color={color} />;
@@ -668,7 +665,7 @@ const App = () => {
               </div>
 
               {/* Platform Cards */}
-              {['Gmail', 'Facebook', 'Instagram', 'Twitter', 'Pinterest', 'TikTok', 'YouTube', 'Threads', 'Reddit', 'Quora', 'Truth Social', 'Tumblr', 'BeReal', 'Bluesky', 'Kaskus', 'Tokopedia', 'ShareChat'].map(platform => {
+              {['Facebook', 'Instagram', 'Twitter', 'Pinterest', 'TikTok', 'YouTube', 'Threads', 'Reddit', 'Quora', 'Truth Social', 'Tumblr', 'BeReal', 'Bluesky', 'Kaskus', 'Tokopedia', 'ShareChat'].map(platform => {
 
                 const count = profiles.filter(p => p && p.platform && p.platform.toLowerCase() === platform.toLowerCase()).length;
                 const pKey = platform.toLowerCase();
@@ -1130,7 +1127,6 @@ const App = () => {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
               <div><label>Platform</label>
                 <select value={newProfile.platform} onChange={e=>setNewProfile({...newProfile,platform:e.target.value})}>
-                  <option value="gmail">📧 Gmail (Google)</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
                   <option value="twitter">X / Twitter</option>
@@ -1295,7 +1291,6 @@ const App = () => {
               <div>
                 <label>Platform</label>
                 <select value={editingProfile.platform || 'facebook'} onChange={e => setEditingProfile({...editingProfile, platform: e.target.value})}>
-                  <option value="gmail">📧 Gmail (Google)</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
                   <option value="twitter">X / Twitter</option>
@@ -1405,7 +1400,6 @@ const App = () => {
                 <label>Platform</label>
                 <select value={bulkEditData.platform} onChange={e => setBulkEditData({...bulkEditData, platform: e.target.value})}>
                   <option value="">(Keep Unchanged)</option>
-                  <option value="gmail">📧 Gmail (Google)</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
                   <option value="twitter">X / Twitter</option>
